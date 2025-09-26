@@ -30,6 +30,7 @@ create table if not exists public.links (
   url text not null,
   description text,
   category text,
+  notes text, -- NEW: markdown notes
   clicks bigint not null default 0,
   created_at timestamptz not null default now()
 );

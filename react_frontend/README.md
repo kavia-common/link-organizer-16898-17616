@@ -8,6 +8,7 @@ A dark, bold, GitHub-inspired React app with Supabase authentication, Tailwind s
 - Dashboard with responsive grid (3/2/1 columns) and collapsible sidebar
 - Search (navbar), filters, sorting, category badges
 - Add/Edit/Delete links via animated modals
+- Markdown notes per link: write in editor (SimpleMDE) and render with react-markdown (GFM)
 - Profile page with tabs: My Links, Analytics (total links, clicks), Settings
 - Minimal redirect page that increments click counter then navigates
 - TailwindCSS dark theme with primary #ff7614 and secondary #27d39a
@@ -40,6 +41,7 @@ Create table `links`:
 - url: text
 - description: text
 - category: text
+- notes: text (markdown)
 - clicks: bigint (default 0)
 - created_at: timestamptz default now()
 

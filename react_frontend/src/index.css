@@ -41,6 +41,116 @@ input, select, textarea {
   @apply inline-flex items-center justify-center rounded-lg font-semibold transition-all;
 }
 
+/* Markdown content defaults */
+/* SimpleMDE dark theme customization */
+.EasyMDEContainer {
+  @apply !bg-transparent;
+}
+
+.EasyMDEContainer .CodeMirror {
+  @apply !bg-black/30 !border-white/10 !text-white/90 !h-[300px];
+}
+
+.EasyMDEContainer .CodeMirror-cursor {
+  @apply !border-white;
+}
+
+.EasyMDEContainer .CodeMirror-selected {
+  @apply !bg-blue-500/30;
+}
+
+.EasyMDEContainer .CodeMirror-placeholder {
+  @apply !text-white/30;
+}
+
+.EasyMDEContainer .editor-toolbar {
+  @apply !bg-black/30 !border-white/10;
+}
+
+.EasyMDEContainer .editor-toolbar button {
+  @apply !text-white/50 hover:!text-white/90 hover:!bg-white/10;
+}
+
+.EasyMDEContainer .editor-toolbar button.active {
+  @apply !text-blue-400 !bg-blue-500/10;
+}
+
+.EasyMDEContainer .editor-preview {
+  @apply !bg-black/90;
+}
+
+/* Markdown preview styles */
+.prose-invert {
+  @apply text-white/90;
+}
+
+.prose-invert h1, 
+.prose-invert h2, 
+.prose-invert h3 { 
+  @apply text-white font-bold;
+}
+
+.prose-invert h1 {
+  @apply text-2xl mb-4 pb-2 border-b border-white/10;
+}
+
+.prose-invert h2 {
+  @apply text-xl mb-3;
+}
+
+.prose-invert h3 {
+  @apply text-lg mb-2;
+}
+
+.prose-invert p, 
+.prose-invert li { 
+  @apply text-white/70 leading-relaxed mb-4;
+}
+
+.prose-invert a { 
+  @apply text-blue-400 hover:text-blue-300 hover:underline break-words transition-colors;
+}
+
+.prose-invert pre { 
+  @apply bg-black/50 text-white/80 p-4 rounded-lg overflow-auto text-sm border border-white/10 my-4;
+}
+
+.prose-invert code { 
+  @apply bg-black/40 text-blue-300 px-1.5 py-0.5 rounded font-mono text-[13px];
+}
+
+.prose-invert blockquote {
+  @apply border-l-2 border-blue-500/50 pl-4 my-4 text-white/60 italic;
+}
+
+.prose-invert hr {
+  @apply my-6 border-white/10;
+}
+
+.prose-invert table {
+  @apply w-full my-4 border-collapse;
+}
+
+.prose-invert th {
+  @apply bg-white/5 text-white font-semibold p-2 border border-white/10 text-left;
+}
+
+.prose-invert td {
+  @apply p-2 border border-white/10 text-white/70;
+}
+
+.prose-invert ul {
+  @apply list-disc list-outside ml-4 mb-4;
+}
+
+.prose-invert ol {
+  @apply list-decimal list-outside ml-4 mb-4;
+}
+
+.prose-invert img {
+  @apply rounded-lg max-w-full my-4;
+}
+
 .btn-primary {
   @apply btn bg-[color:var(--primary)] text-black hover:opacity-90 shadow-soft active:scale-[0.98];
 }

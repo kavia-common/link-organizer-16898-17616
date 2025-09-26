@@ -1,4 +1,6 @@
 import React, { useEffect } from "react";
+import SimpleMDE from "react-simplemde-editor";
+import "easymde/dist/easymde.min.css";
 
 function BaseModal({ open, onClose, children, title }) {
   // Always call hooks; conditionally render markup
@@ -43,11 +45,11 @@ function BaseModal({ open, onClose, children, title }) {
 export function AddEditLinkModal({ open, onClose, initial, onSubmit, loading }) {
   /** Modal for adding or editing a link. */
   const [form, setForm] = React.useState(
-    initial || { title: "", url: "", description: "", category: "General" }
+    initial || { title: "", url: "", description: "", category: "General", notes: "" }
   );
 
   useEffect(() => {
-    setForm(initial || { title: "", url: "", description: "", category: "General" });
+    setForm(initial || { title: "", url: "", description: "", category: "General", notes: "" });
   }, [initial, open]);
 
   const handleSubmit = async (e) => {
@@ -97,6 +99,35 @@ export function AddEditLinkModal({ open, onClose, initial, onSubmit, loading }) 
             className="w-full px-3 py-2"
             placeholder="Short summary..."
           />
+        </div>
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="block text-white/80 text-sm mb-1">Notes (Markdown)</label>
+            <span className="text-xs text-white/40">Supports headings, lists, code, links</span>
+          </div>
+          <div className="rounded-lg overflow-hidden border border-white/10">
+            <SimpleMDE
+              value={form.notes || ""}
+              onChange={(val) => setForm({ ...form, notes: val })}
+              options={{
+                status: false,
+                placeholder: "Write detailed notes in markdown...\n\nSupports:\n- **Bold** and *italic*\n- # Headers\n- Lists and checkboxes\n- `Code` and ```code blocks```\n- > Blockquotes\n- Links and images\n- Tables (via GFM)",
+                spellChecker: false,
+                autofocus: false,
+                autosave: { enabled: false },
+                renderingConfig: { codeSyntaxHighlighting: true },
+                toolbar: [
+                  "bold", "italic", "heading", "|",
+                  "quote", "unordered-list", "ordered-list", "|",
+                  "link", "image", "table", "|",
+                  "preview", "side-by-side", "fullscreen", "|",
+                  "guide"
+                ],
+                previewClass: "prose prose-invert max-w-none",
+                minHeight: "200px"
+              }}
+            />
+          </div>
         </div>
         <div className="pt-2 flex gap-2 justify-end">
           <button

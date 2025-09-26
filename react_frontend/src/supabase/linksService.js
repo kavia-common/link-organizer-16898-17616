@@ -31,8 +31,8 @@ export function useLinksService() {
       q = q.eq("category", category);
     }
     if (search) {
-      // Filter title/description/url using ilike
-      q = q.or(`title.ilike.%${search}%,description.ilike.%${search}%,url.ilike.%${search}%`);
+      // Filter title/description/url/notes using ilike
+      q = q.or(`title.ilike.%${search}%,description.ilike.%${search}%,url.ilike.%${search}%,notes.ilike.%${search}%`);
     }
     switch (sort) {
       case "newest":
@@ -56,12 +56,12 @@ export function useLinksService() {
   };
 
   // PUBLIC_INTERFACE
-  const create = async ({ title, url, description, category }) => {
+  const create = async ({ title, url, description, category, notes }) => {
     /** Create a new link for current user. */
     if (!userId) throw new Error("Not authenticated");
     const { data, error } = await supabase
       .from("links")
-      .insert({ title, url, description, category, user_id: userId })
+      .insert({ title, url, description, category, notes, user_id: userId })
       .select("*")
       .single();
     if (error) throw error;
