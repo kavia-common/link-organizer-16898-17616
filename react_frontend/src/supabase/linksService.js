@@ -94,33 +94,47 @@ export function useLinksService() {
 
   // PUBLIC_INTERFACE
   const incrementClicks = async (id) => {
-    /** Increment click count for link by id (no user guard required for redirect use). */
-    const { data, error } = await supabase
-      .from("links")
-      .update({ clicks: (/** @type {any} */ supabase).rpc ? undefined : undefined })
-      .eq("id", id)
-      .select("clicks, url")
-      .single();
-
-    // Fallback: perform an atomic increment via RPC if configured
-    // Note: If you create a Postgres function increment_clicks(link_id uuid)
-    // you can call it via supabase.rpc("increment_clicks", { link_id: id });
-    if (error) {
-      // Attempt a manual get + update
-      const { data: existing, error: getErr } = await supabase
-        .from("links")
-        .select("clicks, url")
-        .eq("id", id)
-        .single();
-      if (getErr) throw getErr;
-      const { error: updErr } = await supabase
-        .from("links")
-        .update({ clicks: (existing?.clicks || 0) + 1 })
-        .eq("id", id);
-      if (updErr) throw updErr;
-      return { clicks: (existing?.clicks || 0) + 1, url: existing?.url };
+    /** 
+     * Increment click count for link by id and return { clicks, url }.
+     * Supports optional RPC "increment_clicks" if deployed, otherwise falls back
+     * to a safe get + update.
+     * This method intentionally does not require userId to allow public redirect.
+     */
+    // Try RPC first if available in your database
+    try {
+      // Attempt RPC call (will fail if function not created or not allowed)
+      const { data: rpcData, error: rpcError } = await supabase.rpc("increment_clicks", { link_id: id });
+      if (!rpcError) {
+        // After RPC, fetch latest clicks & url
+        const { data: fresh, error: fetchErr } = await supabase
+          .from("links")
+          .select("clicks, url")
+          .eq("id", id)
+          .single();
+        if (fetchErr) throw fetchErr;
+        return fresh;
+      }
+      // fallthrough to manual if RPC not available
+    } catch {
+      // ignore and fallback
     }
-    return data;
+
+    // Manual fallback: read current, then update
+    const { data: existing, error: getErr } = await supabase
+      .from("links")
+      .select("clicks, url")
+      .eq("id", id)
+      .single();
+    if (getErr) throw getErr;
+
+    const nextClicks = (existing?.clicks || 0) + 1;
+    const { error: updErr } = await supabase
+      .from("links")
+      .update({ clicks: nextClicks })
+      .eq("id", id);
+    if (updErr) throw updErr;
+
+    return { clicks: nextClicks, url: existing?.url };
   };
 
   // PUBLIC_INTERFACE

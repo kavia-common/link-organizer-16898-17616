@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useSupabase } from "../supabase/SupabaseProvider";
+import { useLinksService } from "../supabase/linksService";
 
 /**
 Route: GET /r/:id
@@ -12,35 +12,33 @@ It updates the 'clicks' field on the 'links' table and navigates to the 'url'.
 export default function RedirectPage() {
   /** Increments click count, then redirects to the URL for the given link id. */
   const { id } = useParams();
-  const { supabase } = useSupabase();
+  const { incrementClicks } = useLinksService();
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const normalize = (url) => {
+      if (!url) return null;
+      try {
+        // If it already has a scheme, URL will parse. If not, prepend https://
+        const u = new URL(url, url.startsWith("http") ? undefined : "https://");
+        return u.toString();
+      } catch {
+        return null;
+      }
+    };
+
     const go = async () => {
       try {
-        // Retrieve the link
-        const { data: existing, error: getErr } = await supabase
-          .from("links")
-          .select("id, url, clicks")
-          .eq("id", id)
-          .single();
-        if (getErr) throw getErr;
-        const newClicks = (existing?.clicks || 0) + 1;
-        // Update clicks
-        const { error: updErr } = await supabase
-          .from("links")
-          .update({ clicks: newClicks })
-          .eq("id", id);
-        if (updErr) throw updErr;
-        // Redirect
-        const target = existing?.url?.startsWith("http") ? existing.url : `https://${existing?.url}`;
+        const res = await incrementClicks(id);
+        const target = normalize(res?.url);
+        if (!target) throw new Error("Invalid or missing URL for this link.");
         window.location.replace(target);
       } catch (e) {
         setError(e?.message || "Failed to redirect");
       }
     };
     go();
-  }, [id, supabase]);
+  }, [id, incrementClicks]);
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
