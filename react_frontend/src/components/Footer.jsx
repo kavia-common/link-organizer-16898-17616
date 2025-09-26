@@ -4,9 +4,9 @@ import React from "react";
 export default function Footer() {
   /** Simple footer with copyright. */
   return (
-    <footer className="border-t border-white/10 bg-black/60">
+    <footer className="relative border-t border-white/10 bg-black/70 grid-overlay">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-white/60 text-sm flex flex-col sm:flex-row items-center justify-between">
-        <div>© {new Date().getFullYear()} Link Hub. All rights reserved.</div>
+        <div>© {new Date().getFullYear()} LinkHub. All rights reserved.</div>
         <div className="mt-2 sm:mt-0 space-x-4">
           <a
             href="https://supabase.com"

@@ -16,20 +16,24 @@ function BaseModal({ open, onClose, children, title }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full sm:max-w-lg card p-5 sm:mx-0 mx-3 translate-y-0 animate-[fadeIn_0.2s_ease]">
-        <div className="flex items-center justify-between">
-          <h3 className="text-white font-bold">{title}</h3>
-          <button
-            onClick={onClose}
-            className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
-          >
-            ✕
-          </button>
+      <div className="relative w-full sm:max-w-lg sm:mx-0 mx-3">
+        {/* Glow border */}
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-20" />
+        <div className="relative card p-5 translate-y-0 animate-[fadeIn_0.2s_ease]">
+          <div className="flex items-center justify-between">
+            <h3 className="text-white font-bold">{title}</h3>
+            <button
+              onClick={onClose}
+              className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="mt-4">{children}</div>
         </div>
-        <div className="mt-4">{children}</div>
       </div>
     </div>
   );
@@ -126,7 +130,7 @@ export function ConfirmModal({ open, onClose, onConfirm, text = "Are you sure?",
         </button>
         <button
           onClick={onConfirm}
-          className="px-4 py-2 rounded-lg bg-error text-white"
+          className="px-4 py-2 rounded-lg bg-red-500/90 hover:bg-red-500 text-white border border-white/10"
           disabled={loading}
         >
           {loading ? "Deleting..." : "Delete"}

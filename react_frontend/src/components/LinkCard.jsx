@@ -6,7 +6,9 @@ import CategoryBadge from "./CategoryBadge";
 export default function LinkCard({ link, onEdit, onDelete }) {
   /** Card for a single link (title, desc, category, clicks, open, edit, delete). */
   return (
-    <div className="card p-4 group transition hover:translate-y-[-1px] hover:shadow-xl">
+    <div className="card p-5 group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl relative overflow-hidden">
+      {/* Accent gradient strip */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-blue-600/50 via-purple-600/50 to-blue-600/50" />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-white font-bold truncate">{link.title}</h3>
@@ -19,7 +21,7 @@ export default function LinkCard({ link, onEdit, onDelete }) {
         <div className="flex items-center gap-2">
           <RouterLink
             to={`/r/${link.id}`}
-            className="btn btn-secondary px-3 py-1.5"
+            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-soft hover:shadow-blue-500/40 transition-all"
             target="_self"
           >
             Open
@@ -33,7 +35,7 @@ export default function LinkCard({ link, onEdit, onDelete }) {
           </button>
           <button
             onClick={() => onDelete(link)}
-            className="px-3 py-1.5 rounded-lg bg-error/80 hover:bg-error text-white border border-white/10"
+            className="px-3 py-1.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white border border-white/10"
             title="Delete"
           >
             Delete

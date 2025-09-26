@@ -96,21 +96,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* Background effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-20 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
-        <div 
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-                             linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px'
-          }}
-        />
-      </div>
-
+    <div className="min-h-screen relative overflow-hidden">
       <div className="relative max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
@@ -244,7 +230,7 @@ export default function Dashboard() {
                 {links.map((link, idx) => (
                   <div 
                     key={link.id}
-                    className="animate-fade-in"
+                    className="item-fade-in"
                     style={{ animationDelay: `${idx * 50}ms` }}
                   >
                     <LinkCard 
@@ -275,24 +261,6 @@ export default function Dashboard() {
         loading={deleting}
         text={`Delete "${deleteTarget?.title}"? This cannot be undone.`}
       />
-
-      {/* Animation styles */}
-      <style>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.4s ease-out forwards;
-          opacity: 0;
-        }
-      `}</style>
     </div>
   );
 }

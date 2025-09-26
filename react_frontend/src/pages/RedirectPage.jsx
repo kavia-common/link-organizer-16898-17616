@@ -45,7 +45,7 @@ export default function RedirectPage() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
       {error ? (
-        <div className="card p-6 text-error">Error: {error}</div>
+        <div className="card p-6 text-red-400 border-red-500/30 bg-red-500/10">Error: {error}</div>
       ) : (
         <div className="text-white/80 animate-pulse">Redirecting...</div>
       )}

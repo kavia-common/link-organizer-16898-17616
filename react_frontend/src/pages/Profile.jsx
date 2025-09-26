@@ -183,7 +183,7 @@ export default function Profile() {
         </div>
 
         {/* Tab Content */}
-        <div className="animate-fade-in">
+        <div className="page-enter">
           {/* My Links Tab */}
           {tab === "links" && (
             <div>

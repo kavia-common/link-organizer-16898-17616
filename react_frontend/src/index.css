@@ -2,11 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base theme and smooth rendering */
+/* Base theme tokens */
 :root {
   --bg: #000000;
-  --surface: #182230;
+  --surface: #0b0f14; /* slightly deeper than before for higher contrast */
+  --surface-2: #111826; /* layered surface */
   --text: #ffffff;
+  --muted: #9aa4b2;
   --primary: #ff7614;
   --secondary: #27d39a;
   --success: #27d39a;
@@ -24,26 +26,106 @@ body {
   background: var(--bg);
 }
 
+/* Link styling */
 a {
   @apply text-primary hover:opacity-90;
 }
 
+/* Inputs */
 input, select, textarea {
-  @apply bg-surface text-white placeholder-gray-400 border border-white/10 rounded-lg;
+  @apply bg-[color:var(--surface-2)] text-white placeholder-gray-400 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition;
 }
 
+/* Buttons */
 .btn {
   @apply inline-flex items-center justify-center rounded-lg font-semibold transition-all;
 }
 
 .btn-primary {
-  @apply btn bg-primary text-black hover:opacity-90 shadow-soft;
+  @apply btn bg-[color:var(--primary)] text-black hover:opacity-90 shadow-soft active:scale-[0.98];
 }
 
 .btn-secondary {
-  @apply btn bg-secondary text-black hover:opacity-90 shadow-soft;
+  @apply btn bg-[color:var(--secondary)] text-black hover:opacity-90 shadow-soft active:scale-[0.98];
 }
 
+/* Cards */
 .card {
-  @apply bg-surface rounded-2xl shadow-soft border border-white/5;
+  @apply rounded-2xl shadow-soft border border-white/5 bg-[color:var(--surface-2)];
+}
+
+/* Utility: soft glow for accents */
+.glow {
+  box-shadow: 0 0 20px rgba(255, 118, 20, 0.25), 0 0 40px rgba(39, 211, 154, 0.15);
+}
+
+/* Utility: gradient orbs background */
+.bg-orbs {
+  position: relative;
+}
+.bg-orbs:before,
+.bg-orbs:after {
+  content: "";
+  position: absolute;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 9999px;
+  filter: blur(64px);
+  opacity: 0.12;
+  pointer-events: none;
+}
+.bg-orbs:before {
+  top: -6rem;
+  left: 15%;
+  background: radial-gradient(closest-side, rgba(59,130,246,.6), transparent);
+}
+.bg-orbs:after {
+  bottom: -6rem;
+  right: 15%;
+  background: radial-gradient(closest-side, rgba(139,92,246,.6), transparent);
+}
+
+/* Utility: subtle grid overlay */
+.grid-overlay {
+  position: relative;
+}
+.grid-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Transitions */
+.page-enter {
+  animation: pageFade .35s ease-out;
+}
+@keyframes pageFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.item-fade-in {
+  animation: itemFade .4s ease-out forwards;
+  opacity: 0;
+}
+@keyframes itemFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Small helpers */
+.badge {
+  @apply inline-flex items-center text-xs font-semibold px-2 py-1 rounded-full;
+}
+.badge-muted {
+  @apply bg-white/5 border border-white/10 text-white/80;
+}
+.badge-primary {
+  @apply bg-orange-500/90 text-black border border-orange-500/90;
 }
