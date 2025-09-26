@@ -8,7 +8,28 @@ import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
 const SUPABASE_KEY = process.env.REACT_APP_SUPABASE_KEY;
 
-const supabase = createClient(SUPABASE_URL || "", SUPABASE_KEY || "", {
+// Validate configuration early and provide clear diagnostics in the console.
+// We avoid hard-crashing the app; instead we expose isConfigured=false so the UI can inform the user.
+const isConfigured =
+  typeof SUPABASE_URL === "string" &&
+  SUPABASE_URL.trim().length > 0 &&
+  typeof SUPABASE_KEY === "string" &&
+  SUPABASE_KEY.trim().length > 0;
+
+if (!isConfigured) {
+  // Mask the key if any value is present to aid debugging without leaking secrets
+  const maskedKey =
+    SUPABASE_KEY && SUPABASE_KEY.length > 6
+      ? `${SUPABASE_KEY.slice(0, 3)}***${SUPABASE_KEY.slice(-3)}`
+      : SUPABASE_KEY || "(empty)";
+  // eslint-disable-next-line no-console
+  console.error(
+    "[Supabase] Missing configuration. Please set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY in your .env. " +
+      `Current URL: ${SUPABASE_URL || "(empty)"} | KEY: ${maskedKey}`
+  );
+}
+
+const supabase = createClient(SUPABASE_URL || "http://invalid.local", SUPABASE_KEY || "invalid", {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -28,7 +49,10 @@ export function useSupabase() {
 export function useSession() {
   /** Lightweight hook to read current auth session and loading state. */
   const ctx = useSupabase();
-  return { session: ctx?.session ?? null, sessionLoaded: ctx?.sessionLoaded ?? false };
+  return {
+    session: ctx?.session ?? null,
+    sessionLoaded: ctx?.sessionLoaded ?? false,
+  };
 }
 
 // PUBLIC_INTERFACE
@@ -41,6 +65,15 @@ export function SupabaseProvider({ children }) {
   const [sessionLoaded, setSessionLoaded] = useState(false);
 
   useEffect(() => {
+    // If not configured, quickly mark sessionLoaded so UI can show guidance
+    if (!isConfigured) {
+      setSession(null);
+      setSessionLoaded(true);
+      return;
+    }
+
+    let unsub = null;
+
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setSessionLoaded(true);
@@ -51,7 +84,14 @@ export function SupabaseProvider({ children }) {
       setSessionLoaded(true);
     });
 
-    return () => sub.subscription.unsubscribe();
+    unsub = sub?.subscription?.unsubscribe?.bind(sub.subscription) || null;
+    return () => {
+      try {
+        unsub && unsub();
+      } catch {
+        // no-op
+      }
+    };
   }, []);
 
   const value = useMemo(
@@ -59,9 +99,15 @@ export function SupabaseProvider({ children }) {
       supabase,
       session,
       sessionLoaded,
+      isConfigured,
       // PUBLIC_INTERFACE
       signInWithEmail: async (email, password) => {
         /** Email/password sign-in. */
+        if (!isConfigured) {
+          throw new Error(
+            "Supabase is not configured. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY in your .env."
+          );
+        }
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         return data;
@@ -72,6 +118,11 @@ export function SupabaseProvider({ children }) {
          * Email/password sign-up with redirect to SITE URL if provided.
          * Requires REACT_APP_SITE_URL (optional) to be set by orchestrator for proper email redirects.
          */
+        if (!isConfigured) {
+          throw new Error(
+            "Supabase is not configured. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY in your .env."
+          );
+        }
         const redirectTo = process.env.REACT_APP_SITE_URL
           ? `${process.env.REACT_APP_SITE_URL}/auth`
           : undefined;
@@ -86,6 +137,10 @@ export function SupabaseProvider({ children }) {
       // PUBLIC_INTERFACE
       signOut: async () => {
         /** Signs out the current user. */
+        if (!isConfigured) {
+          // Nothing to do but also not an error
+          return;
+        }
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
       }
