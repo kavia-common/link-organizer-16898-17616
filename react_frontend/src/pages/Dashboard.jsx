@@ -3,9 +3,11 @@ import Sidebar from "../components/Sidebar";
 import LinkCard from "../components/LinkCard";
 import { AddEditLinkModal, ConfirmModal } from "../components/Modals";
 import { useLinksService } from "../supabase/linksService";
+import { useSession } from "../supabase/SupabaseProvider";
 
 export default function Dashboard() {
   const { listByUser, create, update, remove } = useLinksService();
+  const { sessionLoaded, session } = useSession();
   const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
@@ -25,6 +27,13 @@ export default function Dashboard() {
   }, [links]);
 
   const reload = useCallback(async () => {
+    // Only attempt reload when auth state is known and we have a session
+    if (!sessionLoaded) return;
+    if (!session) {
+      setLinks([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -35,7 +44,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [listByUser, search, category, sort]);
+  }, [listByUser, search, category, sort, sessionLoaded, session]);
 
   useEffect(() => {
     reload();

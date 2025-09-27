@@ -1,30 +1,51 @@
-/**
- * Link service encapsulates CRUD & analytics against Supabase.
- * Expected Supabase schema for table 'links':
- * - id: uuid (PK)
- * - user_id: uuid (FK to auth.users.id)
- * - title: text
- * - url: text
- * - description: text
- * - category: text
- * - clicks: int8 (default 0)
- * - created_at: timestamptz default now()
- */
+ /**
+  * Link service encapsulates CRUD & analytics against Supabase.
+  * Expected Supabase schema for table 'links':
+  * - id: uuid (PK)
+  * - user_id: uuid (FK to auth.users.id)
+  * - title: text
+  * - url: text
+  * - description: text
+  * - category: text
+  * - notes: text (markdown)
+  * - clicks: int8 (default 0)
+  * - created_at: timestamptz default now()
+  */
 import { useSupabase, useSession } from "./SupabaseProvider";
 
 // PUBLIC_INTERFACE
 export function useLinksService() {
   /** Hook exposing operations for links. Must be used under SupabaseProvider. */
   const { supabase } = useSupabase();
-  const { session } = useSession();
+  const { session, sessionLoaded } = useSession();
   const userId = session?.user?.id;
 
+  /**
+   * Wait for auth session to be loaded (and optionally to have a user)
+   */
+  async function waitForSession(timeoutMs = 5000) {
+    const start = Date.now();
+    // Poll every 50ms until sessionLoaded flips true or timeout
+    while (!sessionLoaded && Date.now() - start < timeoutMs) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    return { ready: sessionLoaded, hasUser: !!(session?.user?.id), userId: session?.user?.id };
+  }
+
   // PUBLIC_INTERFACE
-  const listByUser = async ({ search = "", category = "All", sort = "newest" } = {}) => {
+  const listByUser = async ({ search = "", category = "All", sort = "newest", limit = 100, offset = 0 } = {}) => {
     /**
      * List links for current user with filtering and sorting.
+     * Ensures we don't query before auth session is ready, which would yield empty results.
      */
-    if (!userId) return [];
+    if (!sessionLoaded) {
+      await waitForSession();
+    }
+    if (!userId) {
+      // Not authenticated -> explicit empty list
+      return [];
+    }
     let q = supabase.from("links").select("*").eq("user_id", userId);
 
     if (category && category !== "All") {
@@ -50,6 +71,9 @@ export function useLinksService() {
       default:
         q = q.order("created_at", { ascending: false });
     }
+    // Pagination range
+    q = q.range(offset, offset + limit - 1);
+
     const { data, error } = await q;
     if (error) throw error;
     return data || [];
@@ -58,6 +82,9 @@ export function useLinksService() {
   // PUBLIC_INTERFACE
   const create = async ({ title, url, description, category, notes }) => {
     /** Create a new link for current user. */
+    if (!sessionLoaded) {
+      await waitForSession();
+    }
     if (!userId) throw new Error("Not authenticated");
     const { data, error } = await supabase
       .from("links")
@@ -71,6 +98,9 @@ export function useLinksService() {
   // PUBLIC_INTERFACE
   const update = async (id, patch) => {
     /** Update an existing link owned by current user. */
+    if (!sessionLoaded) {
+      await waitForSession();
+    }
     if (!userId) throw new Error("Not authenticated");
     const { data, error } = await supabase
       .from("links")
@@ -86,6 +116,9 @@ export function useLinksService() {
   // PUBLIC_INTERFACE
   const remove = async (id) => {
     /** Delete a link owned by current user. */
+    if (!sessionLoaded) {
+      await waitForSession();
+    }
     if (!userId) throw new Error("Not authenticated");
     const { error } = await supabase.from("links").delete().eq("id", id).eq("user_id", userId);
     if (error) throw error;
@@ -103,7 +136,7 @@ export function useLinksService() {
     // Try RPC first if available in your database
     try {
       // Attempt RPC call (will fail if function not created or not allowed)
-      const { data: rpcData, error: rpcError } = await supabase.rpc("increment_clicks", { link_id: id });
+      const { data: _rpcData, error: rpcError } = await supabase.rpc("increment_clicks", { link_id: id });
       if (!rpcError) {
         // After RPC, fetch latest clicks & url
         const { data: fresh, error: fetchErr } = await supabase
@@ -140,6 +173,9 @@ export function useLinksService() {
   // PUBLIC_INTERFACE
   const analytics = async () => {
     /** Returns total links and sum of clicks for current user. */
+    if (!sessionLoaded) {
+      await waitForSession();
+    }
     if (!userId) return { totalLinks: 0, totalClicks: 0 };
     const { data, error } = await supabase
       .from("links")
