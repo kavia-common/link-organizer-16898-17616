@@ -1,6 +1,6 @@
 # Supabase Integration Guide
 
-This frontend uses Supabase for authentication and database storage.
+This frontend uses Supabase for authentication and database storage. A companion Express backend is also available to proxy requests and enforce server-side validation/auth.
 
 ## Environment Variables
 
@@ -9,6 +9,13 @@ Set the following in the frontend `.env`:
 - REACT_APP_SUPABASE_URL
 - REACT_APP_SUPABASE_KEY
 - REACT_APP_SITE_URL (optional, used for email signup redirect)
+
+Backend `.env` (link-organizer-16898-17616/express_backend/.env):
+
+- REACT_APP_SUPABASE_URL
+- REACT_APP_SUPABASE_KEY (anon or service-role)
+- PORT=4000
+- CORS_ORIGINS=http://localhost:3000
 
 ## Client Initialization
 
@@ -82,5 +89,8 @@ Adjust security to your needs.
 
 ## Usage
 
-- CRUD functions and analytics live in `src/supabase/linksService.js`
-- Ensure the `links` table and policies are created before running the app
+Option A (current): Direct from frontend via Supabase (`src/supabase/linksService.js`).
+
+Option B (backend API): Call the Express backend with `Authorization: Bearer <supabase_jwt>` for protected routes. Public click endpoint is `POST /links/:id/click`.
+
+Ensure the `links` table, RPC, and policies are created before running the app.
