@@ -3,9 +3,22 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSupabase, useSession } from "../supabase/SupabaseProvider";
 import SearchBar from "./SearchBar";
 
+/**
+ * Compact logo mark used in the navbar.
+ */
+function LogoMark() {
+  return (
+    <div className="relative h-9 w-9 rounded-xl bg-[color:var(--surface-2)] overflow-hidden">
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[color:var(--primary)] to-[color:var(--secondary)] opacity-90" />
+      <div className="absolute -inset-5 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,.25),transparent_40%)]" />
+      <div className="absolute inset-0 rounded-xl ring-1 ring-white/20" />
+    </div>
+  );
+}
+
 // PUBLIC_INTERFACE
 export default function Navbar() {
-  /** Fixed top navbar with app name, search bar, and auth/profile actions. */
+  /** Fixed, bold top navbar with logo/name, responsive search, and auth/profile actions. */
   const { session } = useSession();
   const { signOut } = useSupabase();
   const [query, setQuery] = useState("");
@@ -14,59 +27,77 @@ export default function Navbar() {
 
   const onSearch = (q) => {
     setQuery(q);
-    // broadcast a search event for dashboard to pick up
     const evt = new CustomEvent("app:search", { detail: q });
     window.dispatchEvent(evt);
-    if (location.pathname !== "/") {
-      navigate("/");
-    }
+    if (location.pathname !== "/") navigate("/");
   };
 
   return (
-    <div className="fixed top-0 inset-x-0 z-40">
-      {/* Backdrop with grid and slight glow */}
-      <div className="backdrop-blur bg-black/65 border-b border-white/10 grid-overlay">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
+    <header className="fixed top-0 inset-x-0 z-50">
+      {/* Layered background with dark surface and subtle grid */}
+      <div className="relative bg-[#0b0f14]/95 border-b border-white/10 backdrop-blur-md grid-overlay">
+        {/* Accent bar */}
+        <div className="absolute inset-x-0 -top-[1px] h-[1.5px] bg-gradient-to-r from-[color:var(--primary)] via-white/30 to-[color:var(--secondary)] opacity-60" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
+          {/* Left: Logo + Name */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-soft">
-              <div className="absolute inset-0 rounded-xl opacity-30 blur-lg bg-gradient-to-br from-blue-600 to-purple-600" />
-            </div>
-            <div className="text-white font-extrabold tracking-tight text-lg group-hover:opacity-90">
+            <LogoMark />
+            <span className="text-white font-extrabold tracking-tight text-lg sm:text-xl">
               LinkHub
-            </div>
+            </span>
+            <span className="hidden sm:inline-flex text-xs font-semibold px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/60 group-hover:text-white/80 transition">
+              Beta
+            </span>
           </Link>
-          <div className="flex-1 max-w-2xl mx-auto hidden md:block">
-            <SearchBar value={query} onChange={onSearch} />
+
+          {/* Center: Search (desktop) */}
+          <div className="hidden md:block flex-1 px-6">
+            <div className="max-w-2xl mx-auto">
+              <SearchBar value={query} onChange={onSearch} />
+            </div>
           </div>
+
+          {/* Right: Actions */}
           <div className="ml-auto flex items-center gap-2">
             {session ? (
               <>
+                {/* Avatar or profile button */}
                 <Link
                   to="/profile"
-                  className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition"
+                  className="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:text-white transition shadow-sm"
+                  title="Profile"
                 >
-                  <span className="">👤</span>
-                  <span className="ml-2">Profile</span>
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-[color:var(--primary)] to-[color:var(--secondary)] text-black font-bold text-xs shadow-soft">
+                    {session?.user?.email?.[0]?.toUpperCase() || "U"}
+                  </span>
+                  <span className="hidden md:inline">
+                    {session?.user?.email?.split("@")[0] || "Profile"}
+                  </span>
                 </Link>
                 <button
                   onClick={() => signOut()}
-                  className="btn btn-primary px-3 py-2"
+                  className="btn btn-primary px-3 py-2 rounded-xl shadow-soft"
                   title="Logout"
                 >
                   Logout
                 </button>
               </>
             ) : (
-              <Link to="/auth" className="btn btn-primary px-4 py-2">
+              <Link
+                to="/auth"
+                className="btn btn-primary px-4 py-2 rounded-xl shadow-soft"
+              >
                 Login
               </Link>
             )}
           </div>
         </div>
+
+        {/* Mobile search */}
         <div className="md:hidden px-4 pb-3">
           <SearchBar value={query} onChange={onSearch} />
         </div>
       </div>
-    </div>
+    </header>
   );
 }
