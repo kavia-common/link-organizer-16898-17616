@@ -3,11 +3,12 @@ import Sidebar from "../components/Sidebar";
 import LinkCard from "../components/LinkCard";
 import { AddEditLinkModal, ConfirmModal } from "../components/Modals";
 import { useLinksService } from "../supabase/linksService";
-import { useSession } from "../supabase/SupabaseProvider";
+import { useSession, useSupabase } from "../supabase/SupabaseProvider";
 
 export default function Dashboard() {
   const { listByUser, create, update, remove } = useLinksService();
   const { sessionLoaded, session } = useSession();
+  const { isConfigured } = useSupabase();
   const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
@@ -107,6 +108,12 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div className="relative max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Env configuration banner to avoid a confusing blank dashboard */}
+        {!isConfigured && (
+          <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/40 rounded-lg text-yellow-300 text-sm">
+            Supabase is not configured. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY in your .env, then restart the dev server.
+          </div>
+        )}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
           <div className="lg:w-72 flex-shrink-0">
