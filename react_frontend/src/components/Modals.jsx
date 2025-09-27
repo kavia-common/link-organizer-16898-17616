@@ -123,7 +123,10 @@ export function AddEditLinkModal({ open, onClose, initial, onSubmit, loading }) 
                   "preview", "side-by-side", "fullscreen", "|",
                   "guide"
                 ],
-                previewClass: "prose prose-invert max-w-none",
+                // EasyMDE internally does element.classList.add(previewClass). When previewClass is a
+                // space-separated string, this results in DOMTokenList InvalidCharacterError.
+                // Pass an array so EasyMDE adds each class token correctly.
+                previewClass: ["prose", "prose-invert", "max-w-none"],
                 minHeight: "200px"
               }}
             />
