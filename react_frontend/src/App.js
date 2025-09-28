@@ -1,14 +1,13 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./index.css";
-import "./App.css";
+import { SupabaseProvider, useSession } from "./supabase/SupabaseProvider";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import RedirectPage from "./pages/RedirectPage";
 import AuthPage from "./pages/AuthPage";
-import { SupabaseProvider, useSession } from "./supabase/SupabaseProvider";
 
 // PUBLIC_INTERFACE
 function ProtectedRoute({ children }) {
@@ -16,8 +15,8 @@ function ProtectedRoute({ children }) {
   const { sessionLoaded, session } = useSession();
   if (!sessionLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-color)', color: 'var(--text-color)' }}>
-        <div className="animate-pulse opacity-80">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="animate-pulse text-white/70">Loading...</div>
       </div>
     );
   }
@@ -28,7 +27,7 @@ function ProtectedRoute({ children }) {
 function RoutedViews() {
   const location = useLocation();
   return (
-    <div key={location.pathname}>
+    <div key={location.pathname} className="page-enter">
       <Routes>
         <Route
           path="/"
@@ -56,13 +55,11 @@ function RoutedViews() {
 
 // PUBLIC_INTERFACE
 function AppShell() {
-  /** AppShell composes navbar, routed views, and footer with premium dark layout. */
+  /** AppShell composes navbar, routed views, and footer. */
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-color)', color: 'var(--text-color)' }}>
-      <header>
-        <Navbar />
-      </header>
-      <main id="main" className="flex-1 p-4" role="main" tabIndex={-1}>
+    <div className="min-h-screen relative bg-black bg-orbs">
+      <Navbar />
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 grid-overlay">
         <RoutedViews />
       </main>
       <Footer />
