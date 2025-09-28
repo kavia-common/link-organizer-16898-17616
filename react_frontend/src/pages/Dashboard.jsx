@@ -4,6 +4,7 @@ import LinkCard from "../components/LinkCard";
 import { AddEditLinkModal, ConfirmModal } from "../components/Modals";
 import { useLinksService } from "../supabase/linksService";
 import { useSession, useSupabase } from "../supabase/SupabaseProvider";
+import TroubleshootingPanel from "../components/TroubleshootingPanel";
 
 export default function Dashboard() {
   const { listByUser, create, update, remove } = useLinksService();
@@ -108,21 +109,30 @@ export default function Dashboard() {
     }
   };
 
+  // Decide when to show the troubleshooting panel (visually distinct from normal states)
+  const showTroubleshooting = useMemo(() => {
+    // 1) Missing supabase config is fatal
+    if (!isConfigured) return true;
+
+    // 2) If backend mode is on and we encountered an error and nothing loaded
+    if (usingBackend && error && links.length === 0) return true;
+
+    // 3) Auth loaded but not authenticated and we are on dashboard (should redirect via ProtectedRoute already)
+    // However, if session is null but ProtectedRoute let us through (unlikely), show troubleshooting.
+    if (sessionLoaded && !session) return true;
+
+    // 4) Generic: if we have a hard error and no data after load completed
+    if (!loading && error && links.length === 0) return true;
+
+    return false;
+  }, [isConfigured, usingBackend, error, links.length, loading, sessionLoaded, session]);
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div className="relative max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Env configuration banner to avoid a confusing blank dashboard */}
-        {!isConfigured && (
-          <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/40 rounded-lg text-yellow-300 text-sm">
-            Supabase is not configured. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY in your .env, then restart the dev server.
-          </div>
-        )}
-        {/* Optional hint if backend proxy mode is enabled */}
-        {usingBackend && (
-          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-300 text-xs">
-            Using backend API mode (REACT_APP_API_BASE={API_BASE}). Ensure the Express backend is running and CORS allows this origin.
-          </div>
-        )}
+        {showTroubleshooting ? (
+          <TroubleshootingPanel lastError={error} />
+        ) : (
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
           <div className="lg:w-72 flex-shrink-0">
@@ -282,6 +292,7 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* Modals */}
