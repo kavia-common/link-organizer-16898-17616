@@ -26,6 +26,16 @@ export function useLinksService() {
   const API_BASE = (process.env.REACT_APP_API_BASE || "").trim();
   const useBackend = API_BASE.length > 0;
 
+  // Dev-only diagnostics
+  if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+    // eslint-disable-next-line no-console
+    console.debug(
+      "[linksService] mode:",
+      useBackend ? "backend" : "direct-supabase",
+      useBackend ? `apiBase=${API_BASE}` : ""
+    );
+  }
+
   /**
    * Wait for auth session to be loaded (and optionally to have a user)
    */

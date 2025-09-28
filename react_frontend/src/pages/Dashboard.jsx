@@ -9,6 +9,9 @@ export default function Dashboard() {
   const { listByUser, create, update, remove } = useLinksService();
   const { sessionLoaded, session } = useSession();
   const { isConfigured } = useSupabase();
+  // For diagnostics: whether backend proxy is enabled
+  const API_BASE = (process.env.REACT_APP_API_BASE || "").trim();
+  const usingBackend = API_BASE.length > 0;
   const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
@@ -112,6 +115,12 @@ export default function Dashboard() {
         {!isConfigured && (
           <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/40 rounded-lg text-yellow-300 text-sm">
             Supabase is not configured. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY in your .env, then restart the dev server.
+          </div>
+        )}
+        {/* Optional hint if backend proxy mode is enabled */}
+        {usingBackend && (
+          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-300 text-xs">
+            Using backend API mode (REACT_APP_API_BASE={API_BASE}). Ensure the Express backend is running and CORS allows this origin.
           </div>
         )}
         <div className="flex flex-col lg:flex-row gap-6">
