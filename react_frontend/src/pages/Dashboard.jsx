@@ -138,9 +138,7 @@ export default function Dashboard() {
                     My Links
                   </h1>
                   <p className="text-zinc-400 text-sm">
-                    {loading ? (
-                      "Loading..."
-                    ) : (
+                    {!loading && (
                       <>
                         {links.length} {links.length === 1 ? "link" : "links"}
                         {category !== "All" && ` in ${category}`}
@@ -206,38 +204,53 @@ export default function Dashboard() {
             {/* Content */}
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <svg className="animate-spin h-10 w-10 text-blue-500 mb-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <p className="text-zinc-400">Loading your links...</p>
-              </div>
-            ) : links.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 px-4">
-                <div className="w-20 h-20 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mb-6">
-                  <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                {/* Spinner with gradient ring */}
+                <div className="relative mb-5">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 blur opacity-30" />
+                  <svg className="animate-spin h-12 w-12 relative text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V1.6C5.582 1.6 1.6 5.582 1.6 12H4zm2.4 6.614A7.962 7.962 0 014 12H1.6c0 3.27 1.219 6.259 3.2 8.514L6.4 18.614z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">No links yet</h3>
-                <p className="text-zinc-400 text-center mb-6 max-w-md">
-                  {search ? (
-                    `No links found matching "${search}"`
-                  ) : category !== "All" ? (
-                    `No links in "${category}" category`
-                  ) : (
-                    "Start building your link collection by adding your first link"
-                  )}
+                <p className="text-zinc-400 text-sm">
+                  Fetching your links...
                 </p>
+              </div>
+            ) : links.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 px-4 bg-zinc-900/30 border border-zinc-800 rounded-2xl backdrop-blur-sm">
+                {/* Empty-state illustration */}
+                <div className="relative mb-6">
+                  <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 opacity-20 blur-xl" />
+                  <div className="w-24 h-24 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center relative">
+                    <svg className="w-12 h-12 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="text-2xl font-extrabold text-white mb-2">
+                  {search
+                    ? "No matches found"
+                    : category !== "All"
+                      ? "This category is empty"
+                      : "No links yet!"}
+                </h3>
+                <p className="text-zinc-400 text-center mb-6 max-w-md">
+                  {search
+                    ? `We couldn't find links matching "${search}". Try a different keyword.`
+                    : category !== "All"
+                      ? `You haven't added any links to "${category}" yet.`
+                      : "Add your first resource to kickstart your collection."}
+                </p>
+                {/* CTA only when it's truly empty dashboard context (no search, All category) */}
                 {!search && category === "All" && (
-                  <button 
+                  <button
                     onClick={onAdd}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 flex items-center gap-2"
+                    className="group relative px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg font-semibold text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-200 active:scale-95 flex items-center gap-2"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    Add Your First Link
+                    Add your first link
                   </button>
                 )}
               </div>
