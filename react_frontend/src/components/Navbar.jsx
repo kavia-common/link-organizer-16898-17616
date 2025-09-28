@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSupabase, useSession } from "../supabase/SupabaseProvider";
 import SearchBar from "./SearchBar";
+import WebsiteVitals from "./WebsiteVitals";
 
 /**
  * Modern logo with gradient and glow effect
@@ -25,6 +26,7 @@ export default function Navbar() {
   const { signOut } = useSupabase();
   const [query, setQuery] = useState("");
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showVitals, setShowVitals] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -94,15 +96,17 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               {session ? (
                 <>
-                  {/* Notifications (optional) */}
-                  <button className="hidden sm:flex w-10 h-10 items-center justify-center rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all relative group">
+                  {/* Website Vitals button */}
+                  <button
+                    onClick={() => setShowVitals(true)}
+                    className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-emerald-400 hover:text-white hover:bg-zinc-800 transition-all"
+                    title="Website Vitals"
+                  >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 2-4 1.5 3H21" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 8a7.5 7.5 0 00-13.5-4.5L7 5 5.5 3.5A7.5 7.5 0 003 8c0 7 9 12 9 12s9-5 9-12z" />
                     </svg>
-                    {/* Notification badge */}
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold border-2 border-black">
-                      3
-                    </span>
+                    <span className="hidden xl:inline font-semibold">Website Vitals</span>
                   </button>
 
                   {/* Profile button */}
@@ -220,6 +224,9 @@ export default function Navbar() {
           </div>
         )}
       </header>
+
+      {/* Vitals Modal */}
+      <WebsiteVitals open={showVitals} onClose={() => setShowVitals(false)} />
 
       {/* Spacer to prevent content from going under fixed navbar */}
       <div className="h-16" />
