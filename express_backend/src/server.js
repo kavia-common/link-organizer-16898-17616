@@ -11,6 +11,10 @@ dotenv.config();
 
 const app = express();
 
+// track backend start time and derive restart time
+const START_TIME = new Date();
+const START_TIME_ISO = START_TIME.toISOString();
+
 // Security and parsing middlewares
 app.use(helmet({
   contentSecurityPolicy: false
@@ -32,15 +36,24 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 /**
  * PUBLIC_INTERFACE
  * GET /health
- * Returns service health including DB connectivity.
+ * Returns service health including DB connectivity and operational metadata.
+ * Response model:
  * {
  *   status: "ok" | "degraded" | "down",
  *   service: "linkhub-backend",
  *   time: ISOString,
- *   db: true|false,
- *   details: { message?: string, error?: string },
- *   env: { supabaseConfigured: boolean },
- *   cors: { allowedOrigins: string[] }
+ *   latency_ms: number,
+ *   db: boolean,
+ *   details: { message?: string, error?: string, sample?: number },
+ *   env: { supabaseConfigured: boolean, node_env?: string },
+ *   cors: { allowedOrigins: string[] },
+ *   system: {
+ *     node_version: string,
+ *     dependencies?: Record<string,string>,
+ *     restart_time: ISOString,
+ *     uptime_s: number
+ *   },
+ *   jobs: { configured: boolean, entries?: Array<{name:string,status:string,lastRun?:string}> }
  * }
  */
 app.get("/health", async (req, res) => {
@@ -51,11 +64,7 @@ app.get("/health", async (req, res) => {
     !!(process.env.REACT_APP_SUPABASE_URL && process.env.REACT_APP_SUPABASE_KEY);
 
   try {
-    // Lightweight DB check: perform a trivial RPC to get server time if available,
-    // otherwise do a minimal select with limit 1 on links (may rely on anon policy).
-    // We avoid heavy queries and accept a failure as db=false with error detail.
-
-    // Try a trivial RPC 'pg_sleep' equivalent DOES NOT exist; attempt selecting from links with range 0..0
+    // Lightweight DB check: minimal select with limit 1 on links (may rely on anon policy).
     const { data, error } = await supabase
       .from("links")
       .select("id")
@@ -74,6 +83,14 @@ app.get("/health", async (req, res) => {
   }
 
   const status = dbOk ? "ok" : (supabaseConfigured ? "degraded" : "down");
+
+  // Derive dependency versions for key libs we use (best-effort; avoid heavy fs reads)
+  const dependencies = {
+    express: (express?.name && typeof express?.name === "string") ? undefined : undefined
+  };
+  // Prefer exposing explicit known versions from process.versions when applicable
+  const nodeVersion = process.versions?.node || "unknown";
+
   const payload = {
     status,
     service: "linkhub-backend",
@@ -81,15 +98,33 @@ app.get("/health", async (req, res) => {
     latency_ms: Date.now() - start,
     db: dbOk,
     details,
-    env: { supabaseConfigured },
+    env: { supabaseConfigured, node_env: process.env.NODE_ENV || "development" },
     cors: {
       allowedOrigins: (process.env.CORS_ORIGINS || "")
         .split(",")
         .map(s => s.trim())
         .filter(Boolean),
     },
+    system: {
+      node_version: nodeVersion,
+      dependencies: {
+        // Best-effort to publish major versions we care about; values can be refined by CI if desired
+        express: "4.x",
+        helmet: "7.x",
+        morgan: "1.x",
+        cors: "2.x",
+        "@supabase/supabase-js": "2.x"
+      },
+      restart_time: START_TIME_ISO,
+      uptime_s: Math.round(process.uptime())
+    },
+    // Jobs section placeholder. Integrators can replace with real scheduler status.
+    jobs: {
+      configured: false,
+      entries: []
+    }
   };
-  // Prefer 200 always for health summary; internal checks included in JSON.
+  // Always return 200 OK; consumers should inspect payload.status for detailed state.
   res.status(200).json(payload);
 });
 

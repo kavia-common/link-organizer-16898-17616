@@ -22,6 +22,11 @@ REACT_APP_SUPABASE_URL=your_supabase_url
 REACT_APP_SUPABASE_KEY=your_supabase_anon_key
 # Optional for email confirmation redirect
 REACT_APP_SITE_URL=http://localhost:3000
+# Optional: surfaced in Website Vitals (Advanced)
+REACT_APP_BUILD_HASH=$(git rev-parse --short HEAD)
+REACT_APP_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+# If using the Express backend (to enable /health and proxy features)
+REACT_APP_API_BASE=http://localhost:4000
 ```
 
 ## Getting Started
