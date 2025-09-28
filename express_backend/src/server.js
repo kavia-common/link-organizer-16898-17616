@@ -58,38 +58,83 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
  */
 app.get("/health", async (req, res) => {
   const start = Date.now();
-  let dbOk = false;
-  let details = {};
+
+  // env config flags
   const supabaseConfigured =
     !!(process.env.REACT_APP_SUPABASE_URL && process.env.REACT_APP_SUPABASE_KEY);
 
+  // 1) DB check (best-effort)
+  let dbOk = false;
+  let dbDetails = {};
   try {
-    // Lightweight DB check: minimal select with limit 1 on links (may rely on anon policy).
-    const { data, error } = await supabase
-      .from("links")
-      .select("id")
-      .limit(1);
-
+    const { data, error } = await supabase.from("links").select("id").limit(1);
     if (error) {
       dbOk = false;
-      details = { error: error.message };
+      dbDetails = { error: error.message };
     } else {
       dbOk = true;
-      details = { message: "Supabase reachable", sample: Array.isArray(data) ? data.length : 0 };
+      dbDetails = { message: "Supabase reachable", sample: Array.isArray(data) ? data.length : 0 };
     }
   } catch (e) {
     dbOk = false;
-    details = { error: e?.message || String(e) };
+    dbDetails = { error: e?.message || String(e) };
   }
 
-  const status = dbOk ? "ok" : (supabaseConfigured ? "degraded" : "down");
+  // 2) Storage quick check (list operation)
+  let storage = { ok: false, error: null };
+  try {
+    // list buckets requires service role; anon may not have it; do a HEAD ping to storage service URL
+    const storageUrl =
+      (process.env.REACT_APP_SUPABASE_URL || "").replace(/\/$/, "") + "/storage/v1";
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2500);
+    const r = await fetch(storageUrl, { method: "GET", signal: controller.signal });
+    clearTimeout(timer);
+    storage.ok = r.ok;
+    storage.error = r.ok ? null : `HTTP ${r.status}`;
+  } catch (e) {
+    storage = { ok: false, error: e?.message || "storage-ping-failed" };
+  }
 
-  // Derive dependency versions for key libs we use (best-effort; avoid heavy fs reads)
-  const dependencies = {
-    express: (express?.name && typeof express?.name === "string") ? undefined : undefined
+  // 3) Supabase latency timing (ping storage; proxy measure)
+  const supabaseLatencyStart = Date.now();
+  let supabaseLatencyMs = null;
+  try {
+    const pingUrl =
+      (process.env.REACT_APP_SUPABASE_URL || "").replace(/\/$/, "") + "/storage/v1";
+    const ctrl = new AbortController();
+    const pingTimer = setTimeout(() => ctrl.abort(), 2500);
+    const r2 = await fetch(pingUrl, { method: "GET", signal: ctrl.signal });
+    clearTimeout(pingTimer);
+    supabaseLatencyMs = Date.now() - supabaseLatencyStart;
+  } catch {
+    supabaseLatencyMs = null;
+  }
+
+  // 4) Dependency versions from package.json (best-effort)
+  let deps = {};
+  try {
+    const pkg = await import("../../package.json", { with: { type: "json" } }).then(m => m.default || m);
+    deps = pkg?.dependencies || {};
+  } catch {
+    // fallback static values if reading fails
+    deps = {
+      express: "unknown",
+      helmet: "unknown",
+      morgan: "unknown",
+      cors: "unknown",
+      "@supabase/supabase-js": "unknown",
+    };
+  }
+
+  // 5) Build metadata passthrough from env (optional)
+  const build = {
+    hash: process.env.BUILD_HASH || null,
+    time: process.env.BUILD_TIME || null,
   };
-  // Prefer exposing explicit known versions from process.versions when applicable
+
   const nodeVersion = process.versions?.node || "unknown";
+  const status = dbOk ? "ok" : (supabaseConfigured ? "degraded" : "down");
 
   const payload = {
     status,
@@ -97,34 +142,42 @@ app.get("/health", async (req, res) => {
     time: new Date().toISOString(),
     latency_ms: Date.now() - start,
     db: dbOk,
-    details,
-    env: { supabaseConfigured, node_env: process.env.NODE_ENV || "development" },
+    details: dbDetails,
+    env: {
+      supabaseConfigured,
+      node_env: process.env.NODE_ENV || "development",
+    },
     cors: {
       allowedOrigins: (process.env.CORS_ORIGINS || "")
         .split(",")
-        .map(s => s.trim())
+        .map((s) => s.trim())
         .filter(Boolean),
     },
     system: {
       node_version: nodeVersion,
-      dependencies: {
-        // Best-effort to publish major versions we care about; values can be refined by CI if desired
-        express: "4.x",
-        helmet: "7.x",
-        morgan: "1.x",
-        cors: "2.x",
-        "@supabase/supabase-js": "2.x"
-      },
+      dependencies: deps,
       restart_time: START_TIME_ISO,
-      uptime_s: Math.round(process.uptime())
+      uptime_s: Math.round(process.uptime()),
     },
-    // Jobs section placeholder. Integrators can replace with real scheduler status.
     jobs: {
       configured: false,
-      entries: []
-    }
+      entries: [],
+    },
+    supabase: {
+      latency_ms: supabaseLatencyMs,
+      storage_ok: storage.ok,
+      storage_error: storage.error,
+    },
+    build,
   };
-  // Always return 200 OK; consumers should inspect payload.status for detailed state.
+
+  // Expose any upstream rate limit headers if we ever proxy through here (noop today)
+  try {
+    res.setHeader("x-health", "ok");
+  } catch {
+    // ignore
+  }
+
   res.status(200).json(payload);
 });
 

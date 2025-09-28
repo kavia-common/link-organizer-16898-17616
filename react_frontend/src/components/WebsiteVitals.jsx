@@ -190,8 +190,18 @@ function BackendSection({ apiBase, apiCheck, networkHint }) {
     <SectionCard
       title="Backend API"
       right={
-        <Badge color={apiBase ? (apiCheck.reachable ? "green" : apiCheck.pending ? "yellow" : "red") : "purple"}>
-          {apiBase ? (apiCheck.pending ? "Checking" : apiCheck.reachable ? "Reachable" : "Unreachable") : "Not configured"}
+        <Badge color={
+          apiBase
+            ? (apiCheck.pending ? "yellow" : (apiCheck.reachable
+              ? (apiCheck?.payload?.status === "ok" ? "green" : apiCheck?.payload?.status === "degraded" ? "yellow" : "red")
+              : "red"))
+            : "purple"
+        }>
+          {apiBase
+            ? (apiCheck.pending ? "Checking" : (apiCheck.reachable
+              ? (apiCheck?.payload?.status ? `Reachable (${apiCheck.payload.status})` : "Reachable")
+              : "Unreachable"))
+            : "Not configured"}
         </Badge>
       }
     >
@@ -261,6 +271,8 @@ function AdvancedSection({ apiBase, apiCheck, supabaseUrl }) {
   // Backend metadata
   const sys = apiCheck?.payload?.system || {};
   const jobs = apiCheck?.payload?.jobs || { configured: false, entries: [] };
+  const supa = apiCheck?.payload?.supabase || {};
+  const backendBuild = apiCheck?.payload?.build || {};
 
   return (
     <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl">
@@ -280,7 +292,8 @@ function AdvancedSection({ apiBase, apiCheck, supabaseUrl }) {
               <div className="text-xs text-zinc-400 space-y-1">
                 <div>Backend health fetch: {formatMs(backendLatency)}</div>
                 <div>Backend self-reported: {formatMs(backendSelfLatency)}</div>
-                <div>Supabase ping: {supaPing.pending ? "checking..." : (supaPing.ok ? `${supaPing.ms} ms` : `unavailable (${supaPing.error || "error"})`)}</div>
+                <div>Supabase ping (frontend): {supaPing.pending ? "checking..." : (supaPing.ok ? `${supaPing.ms} ms` : `unavailable (${supaPing.error || "error"})`)}</div>
+                <div>Supabase ping (backend): {supa?.latency_ms != null ? `${supa.latency_ms} ms` : "n/a"}</div>
               </div>
             </div>
             <div className="bg-zinc-950/60 border border-zinc-800 rounded-lg p-3">
@@ -302,9 +315,25 @@ function AdvancedSection({ apiBase, apiCheck, supabaseUrl }) {
               </div>
             </div>
             <div className="bg-zinc-950/60 border border-zinc-800 rounded-lg p-3">
+              <div className="text-white font-medium mb-1">Backend Build</div>
+              <div className="text-xs text-zinc-400 space-y-1">
+                <div>Build hash: {backendBuild.hash || "n/a"}</div>
+                <div>Build time: {backendBuild.time || "n/a"}</div>
+              </div>
+            </div>
+            <div className="bg-zinc-950/60 border border-zinc-800 rounded-lg p-3">
               <div className="text-white font-medium mb-1">Supabase API limits</div>
               <div className="text-xs text-zinc-400 space-y-1">
-                {quotaHints.length > 0 ? quotaHints.map((ln) => <div key={ln}>{ln}</div>) : <div>Not available (no quota headers detected)</div>}
+                {quotaHints.length > 0
+                  ? quotaHints.map((ln) => <div key={ln}>{ln}</div>)
+                  : <div>Not available (no quota headers detected). Your plan may not return rate limit headers here.</div>}
+              </div>
+            </div>
+            <div className="bg-zinc-950/60 border border-zinc-800 rounded-lg p-3">
+              <div className="text-white font-medium mb-1">Supabase Storage</div>
+              <div className="text-xs text-zinc-400 space-y-1">
+                <div>Status: <span className={supa?.storage_ok ? "text-emerald-400" : "text-red-400"}>{supa?.storage_ok ? "OK" : "Issue"}</span></div>
+                {!supa?.storage_ok && <div>Error: {supa?.storage_error || "unknown"}</div>}
               </div>
             </div>
             <div className="bg-zinc-950/60 border border-zinc-800 rounded-lg p-3 md:col-span-2">

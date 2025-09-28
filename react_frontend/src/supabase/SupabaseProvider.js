@@ -4,6 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 /**
  * Supabase client configured via env vars.
  * IMPORTANT: Requires REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY in the environment.
+ * Optional build metadata (for Website Vitals Advanced panel):
+ * - REACT_APP_BUILD_HASH: git SHA or build identifier
+ * - REACT_APP_BUILD_TIME: ISO timestamp of the frontend build
  */
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
 const SUPABASE_KEY = process.env.REACT_APP_SUPABASE_KEY;
