@@ -1,11 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
+import "./App.css";
 import App from "./App";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) {
-  // Fallback for environments where index.html didn't inject #root properly.
   const el = document.createElement("div");
   el.innerText = "App failed to mount: #root element not found.";
   el.style.color = "white";
@@ -14,5 +15,11 @@ if (!rootEl) {
   document.body.appendChild(el);
 } else {
   const root = ReactDOM.createRoot(rootEl);
-  root.render(<App />);
+  root.render(
+    <React.StrictMode>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </React.StrictMode>
+  );
 }
