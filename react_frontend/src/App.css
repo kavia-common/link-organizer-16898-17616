@@ -28,6 +28,8 @@
   min-height: 100vh;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+:root { --bg-primary: #000; --text-primary: #fff; }
+[data-theme="dark"] { --bg-primary: #000; --text-primary: #fff; }
 
 .App-logo {
   height: 40vmin;
