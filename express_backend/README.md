@@ -20,6 +20,20 @@ npm run dev
 
 Server: http://localhost:4000
 
+### Health
+GET /health -> 200 OK with JSON
+{
+  "status": "ok|degraded|down",
+  "service": "linkhub-backend",
+  "time": "ISO",
+  "latency_ms": number,
+  "db": true|false,
+  "details": { ... },
+  "env": { "supabaseConfigured": boolean },
+  "cors": { "allowedOrigins": string[] }
+}
+Use this in the frontend diagnostics to surface DB health and network/CORS configuration.
+
 ## Authentication
 
 - All protected endpoints require `Authorization: Bearer <supabase_jwt>` from the React frontend (via supabase.auth.getSession()).

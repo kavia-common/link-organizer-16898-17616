@@ -109,7 +109,7 @@ export default function TroubleshootingPanel({ lastError }) {
   }, [API_BASE]);
 
   const envOk = isConfigured && SUPABASE_URL && SUPABASE_KEY;
-  const apiMode = API_BASE ? "backend" : "direct-supabase";
+  const apiMode = API_BASE ? "backend (active)" : "direct-supabase";
   const isAuthed = !!session;
 
   const badgeEnv = <Label color={envOk ? "green" : "red"}>{envOk ? "OK" : "Missing"}</Label>;

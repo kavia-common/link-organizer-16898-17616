@@ -5,7 +5,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import linksRouter from "./routes/links.js";
 import categoriesRouter from "./routes/categories.js";
-import { supabaseAuthMiddleware } from "./middleware/auth.js";
+import { supabaseAuthMiddleware, supabase } from "./middleware/auth.js";
 
 dotenv.config();
 
@@ -29,9 +29,68 @@ app.use(cors({
 }));
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
-// Health check
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", service: "linkhub-backend", time: new Date().toISOString() });
+/**
+ * PUBLIC_INTERFACE
+ * GET /health
+ * Returns service health including DB connectivity.
+ * {
+ *   status: "ok" | "degraded" | "down",
+ *   service: "linkhub-backend",
+ *   time: ISOString,
+ *   db: true|false,
+ *   details: { message?: string, error?: string },
+ *   env: { supabaseConfigured: boolean },
+ *   cors: { allowedOrigins: string[] }
+ * }
+ */
+app.get("/health", async (req, res) => {
+  const start = Date.now();
+  let dbOk = false;
+  let details = {};
+  const supabaseConfigured =
+    !!(process.env.REACT_APP_SUPABASE_URL && process.env.REACT_APP_SUPABASE_KEY);
+
+  try {
+    // Lightweight DB check: perform a trivial RPC to get server time if available,
+    // otherwise do a minimal select with limit 1 on links (may rely on anon policy).
+    // We avoid heavy queries and accept a failure as db=false with error detail.
+
+    // Try a trivial RPC 'pg_sleep' equivalent DOES NOT exist; attempt selecting from links with range 0..0
+    const { data, error } = await supabase
+      .from("links")
+      .select("id")
+      .limit(1);
+
+    if (error) {
+      dbOk = false;
+      details = { error: error.message };
+    } else {
+      dbOk = true;
+      details = { message: "Supabase reachable", sample: Array.isArray(data) ? data.length : 0 };
+    }
+  } catch (e) {
+    dbOk = false;
+    details = { error: e?.message || String(e) };
+  }
+
+  const status = dbOk ? "ok" : (supabaseConfigured ? "degraded" : "down");
+  const payload = {
+    status,
+    service: "linkhub-backend",
+    time: new Date().toISOString(),
+    latency_ms: Date.now() - start,
+    db: dbOk,
+    details,
+    env: { supabaseConfigured },
+    cors: {
+      allowedOrigins: (process.env.CORS_ORIGINS || "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean),
+    },
+  };
+  // Prefer 200 always for health summary; internal checks included in JSON.
+  res.status(200).json(payload);
 });
 
 // Public docs for how to use Web and JWT with Supabase

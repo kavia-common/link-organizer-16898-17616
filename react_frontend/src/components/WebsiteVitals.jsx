@@ -211,7 +211,7 @@ export default function WebsiteVitals({ open, onClose }) {
               <VitalRow
                 ok={!!API_BASE}
                 label="Mode"
-                details={API_BASE ? "backend" : "direct-supabase (no API proxy)"}
+                details={API_BASE ? "Active (Backend API proxy)" : "Direct Supabase (no backend proxy)"}
               />
               <VitalRow
                 ok={API_BASE ? apiCheck.reachable : true}
@@ -263,7 +263,7 @@ export default function WebsiteVitals({ open, onClose }) {
                 }
               />
               <div className="text-xs text-zinc-500 mt-2">
-                Tip: If using the Express backend, expose /health with database status to improve visibility.
+                Production tip: Backend /health is reporting database {dbInfo ? "OK" : dbInfo === false ? "issues" : "status not provided"}.
               </div>
             </div>
 
@@ -273,11 +273,11 @@ export default function WebsiteVitals({ open, onClose }) {
                 <Badge color="blue">Guide</Badge>
               </div>
               <ul className="list-disc list-outside ml-5 space-y-2 text-sm text-zinc-300">
-                <li>Ensure REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY are set in .env (frontend).</li>
-                <li>If using the backend, set REACT_APP_API_BASE and start the Express server.</li>
-                <li>Configure CORS on backend to allow your frontend origin (e.g., http://localhost:3000).</li>
-                <li>Ensure Supabase 'links' table and RLS policies exist (see assets/supabase.md).</li>
-                <li>Sign out/in to refresh your session after environment changes.</li>
+                <li>Frontend: set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY in .env, then restart.</li>
+                <li>Backend: set REACT_APP_API_BASE in frontend, start Express, and allow CORS for your site origin.</li>
+                <li>Supabase: ensure links table, RLS policies, and optional increment_clicks RPC are created.</li>
+                <li>Auth: sign out/in to refresh your session if you changed keys or URL.</li>
+                <li>Networking: if health shows CORS or network errors, update CORS_ORIGINS in backend .env.</li>
               </ul>
             </div>
           </div>
