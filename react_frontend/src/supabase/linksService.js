@@ -150,16 +150,42 @@ export function useLinksService() {
 
     if (useBackend) {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/links`, {
+      const url = `${API_BASE}/links`;
+      // Dev diagnostics
+      if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.debug("[linksService.create] POST", url, { payload: { ...payload, notes: payload?.notes ? "(len)" : "" } });
+      }
+      const res = await fetch(url, {
         method: "POST",
         headers,
         body: JSON.stringify(payload)
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || `Failed to create link (${res.status})`);
+        // Try to extract useful error text
+        let bodyText = "";
+        try {
+          const ct = res.headers.get("content-type") || "";
+          if (ct.includes("application/json")) {
+            const j = await res.json();
+            bodyText = j?.error || JSON.stringify(j);
+          } else {
+            bodyText = await res.text();
+          }
+        } catch {
+          // ignore parse errors
+        }
+        const msg = bodyText ? `Failed to create link (${res.status}): ${bodyText}` : `Failed to create link (${res.status})`;
+        // eslint-disable-next-line no-console
+        console.error("[linksService.create] Backend error", { status: res.status, msg, url });
+        throw new Error(msg);
       }
-      return await res.json();
+      const out = await res.json();
+      if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.debug("[linksService.create] Success", out?.id ? { id: out.id } : out);
+      }
+      return out;
     }
 
     const { data, error } = await supabase

@@ -88,9 +88,17 @@ export function AddEditLinkModal({ open, onClose, initial, onSubmit, loading }) 
     const v = validate();
     if (!v.ok) return;
     try {
+      if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.debug("[AddEditLinkModal] submit", { mode: process.env.REACT_APP_API_BASE ? "backend" : "direct-supabase", values: { ...v.values, notes: v.values?.notes ? "(len)" : "" } });
+      }
       await onSubmit(v.values);
       setErr("");
     } catch (submitErr) {
+      if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.error("[AddEditLinkModal] submit failed", submitErr);
+      }
       setErr(submitErr?.message || "Failed to save link");
     }
   };
@@ -175,17 +183,23 @@ export function AddEditLinkModal({ open, onClose, initial, onSubmit, loading }) 
             />
           </div>
         </div>
-        <div className="pt-2 flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/80 hover:bg-white/10"
-          >
-            Cancel
-          </button>
-          <button type="submit" className="btn btn-primary px-4 py-2" disabled={loading}>
-            {loading ? "Saving..." : initial ? "Save" : "Add"}
-          </button>
+        <div className="pt-2 flex gap-2 justify-between items-center">
+          {/* Diagnostics note (dev-time hint) */}
+          <div className="text-[10px] text-white/40">
+            Mode: {process.env.REACT_APP_API_BASE ? "backend" : "direct-supabase"} • Check DevTools console/network if save fails.
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/80 hover:bg-white/10"
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary px-4 py-2" disabled={loading}>
+              {loading ? "Saving..." : initial ? "Save" : "Add"}
+            </button>
+          </div>
         </div>
       </form>
     </BaseModal>

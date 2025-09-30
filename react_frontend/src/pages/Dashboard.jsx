@@ -79,7 +79,12 @@ export default function Dashboard() {
   const handleSubmitLink = async (values) => {
     // values come from AddEditLinkModal.validate() and include a normalized URL.
     setSaving(true);
+    const mode = (process.env.REACT_APP_API_BASE || "").trim().length > 0 ? "backend" : "direct-supabase";
     try {
+      if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.debug("[Dashboard] handleSubmitLink", { mode, isEdit: !!editTarget, values: { ...values, notes: values?.notes ? "(len)" : "" } });
+      }
       // Do not rebuild/normalize again here to avoid losing modal's normalized url.
       if (editTarget) {
         await update(editTarget.id, values);
@@ -90,6 +95,10 @@ export default function Dashboard() {
       setEditTarget(null);
       reload();
     } catch (e) {
+      if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.error("[Dashboard] handleSubmitLink failed", { mode, error: e?.message || String(e) });
+      }
       // Surface the error back to the modal by throwing so modal can render inline error
       throw e;
     } finally {
