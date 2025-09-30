@@ -135,9 +135,14 @@ export function useLinksService() {
     }
     if (!userId) throw new Error("You must be signed in to add links.");
 
+    // Defensive normalization: ensure URL has http/https scheme even if caller forgot
+    const cleanUrlRaw = (url || "").trim();
+    const hasScheme = /^https?:\/\//i.test(cleanUrlRaw);
+    const cleanUrl = cleanUrlRaw && !hasScheme ? `https://${cleanUrlRaw}` : cleanUrlRaw;
+
     const payload = {
       title: (title || "").trim(),
-      url: (url || "").trim(),
+      url: cleanUrl,
       description: (description || "").trim(),
       category: (category || "General").trim() || "General",
       notes: notes || ""

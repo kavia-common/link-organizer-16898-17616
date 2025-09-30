@@ -76,20 +76,15 @@ export default function Dashboard() {
     setShowConfirm(true);
   };
 
-  const handleSubmitLink = async (form) => {
+  const handleSubmitLink = async (values) => {
+    // values come from AddEditLinkModal.validate() and include a normalized URL.
     setSaving(true);
     try {
-      const payload = {
-        title: (form.title || "").trim(),
-        url: (form.url || "").trim(),
-        description: (form.description || "").trim(),
-        category: (form.category || "General").trim() || "General",
-        notes: form.notes || ""
-      };
+      // Do not rebuild/normalize again here to avoid losing modal's normalized url.
       if (editTarget) {
-        await update(editTarget.id, payload);
+        await update(editTarget.id, values);
       } else {
-        await create(payload);
+        await create(values);
       }
       setShowAddEdit(false);
       setEditTarget(null);
