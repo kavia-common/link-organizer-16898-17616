@@ -79,16 +79,24 @@ export default function Dashboard() {
   const handleSubmitLink = async (form) => {
     setSaving(true);
     try {
+      const payload = {
+        title: (form.title || "").trim(),
+        url: (form.url || "").trim(),
+        description: (form.description || "").trim(),
+        category: (form.category || "General").trim() || "General",
+        notes: form.notes || ""
+      };
       if (editTarget) {
-        await update(editTarget.id, form);
+        await update(editTarget.id, payload);
       } else {
-        await create(form);
+        await create(payload);
       }
       setShowAddEdit(false);
       setEditTarget(null);
       reload();
     } catch (e) {
-      alert(e?.message || "Failed to save link");
+      // Surface the error back to the modal by throwing so modal can render inline error
+      throw e;
     } finally {
       setSaving(false);
     }

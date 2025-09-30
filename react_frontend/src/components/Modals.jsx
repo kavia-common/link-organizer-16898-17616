@@ -47,18 +47,61 @@ export function AddEditLinkModal({ open, onClose, initial, onSubmit, loading }) 
   const [form, setForm] = React.useState(
     initial || { title: "", url: "", description: "", category: "General", notes: "" }
   );
+  const [err, setErr] = React.useState("");
 
   useEffect(() => {
     setForm(initial || { title: "", url: "", description: "", category: "General", notes: "" });
+    setErr("");
   }, [initial, open]);
+
+  function normalizeUrl(u = "") {
+    const val = String(u).trim();
+    if (!val) return "";
+    // If missing scheme, prefix with https://
+    if (!/^https?:\/\//i.test(val)) {
+      return `https://${val}`;
+    }
+    return val;
+  }
+
+  const validate = () => {
+    const title = (form.title || "").trim();
+    const url = normalizeUrl(form.url || "");
+    if (!title) {
+      setErr("Title is required");
+      return { ok: false };
+    }
+    try {
+      // Validate URL with URL API and require http/https scheme
+      const u = new URL(url);
+      if (!/^https?$/.test(u.protocol.replace(":", ""))) throw new Error("Invalid protocol");
+    } catch {
+      setErr("Please provide a valid URL starting with http:// or https://");
+      return { ok: false };
+    }
+    setErr("");
+    return { ok: true, values: { ...form, title, url } };
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSubmit(form);
+    const v = validate();
+    if (!v.ok) return;
+    try {
+      await onSubmit(v.values);
+      setErr("");
+    } catch (submitErr) {
+      setErr(submitErr?.message || "Failed to save link");
+    }
   };
 
   return (
     <BaseModal open={open} onClose={onClose} title={initial ? "Edit Link" : "Add Link"}>
+      {err && (
+        <div className="mb-3 p-2 bg-red-500/10 border border-red-500/40 rounded text-red-300 text-sm">
+          {err}
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
           <label className="block text-white/80 text-sm mb-1">Title</label>

@@ -133,14 +133,22 @@ export function useLinksService() {
     if (!sessionLoaded) {
       await waitForSession();
     }
-    if (!userId) throw new Error("Not authenticated");
+    if (!userId) throw new Error("You must be signed in to add links.");
+
+    const payload = {
+      title: (title || "").trim(),
+      url: (url || "").trim(),
+      description: (description || "").trim(),
+      category: (category || "General").trim() || "General",
+      notes: notes || ""
+    };
 
     if (useBackend) {
       const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE}/links`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ title, url, description, category, notes })
+        body: JSON.stringify(payload)
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -151,7 +159,7 @@ export function useLinksService() {
 
     const { data, error } = await supabase
       .from("links")
-      .insert({ title, url, description, category, notes, user_id: userId })
+      .insert({ ...payload, user_id: userId })
       .select("*")
       .single();
     if (error) throw error;
